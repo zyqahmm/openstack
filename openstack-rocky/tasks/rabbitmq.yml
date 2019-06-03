@@ -1,0 +1,20 @@
+---
+- name: Install message queeu packages
+  yum: 
+    name: "rabbitmq-server"
+    state: present
+
+- name: Start the message queue service and configure it to start when the system boots
+  service:
+    name: rabbitmq-server.service
+    state: started
+    enabled: yes
+
+- name: rabbitmq add the openstack user and grants privalage
+  rabbitmq_user:
+    user: openstack
+    password: RABBIT_PASS
+    configure_priv: '.*'
+    read_priv: '.*'
+    write_priv: '.*'
+

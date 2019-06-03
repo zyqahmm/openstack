@@ -1,0 +1,89 @@
+---
+- name: Create a new database with name 'neutron'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: neutron
+    state: present
+
+- name: Create database user with name 'neutron' and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: '%'
+    host_all: yes
+    name: neutron
+    password: redhat
+    priv: 'neutron.*:ALL,GRANT'
+    append_privs: true
+    state: present
+
+#- name: config
+
+- name: Install the components
+  yum:
+    name: "{{ item }}"
+    state: present
+    loop:
+      - 'openstack-neutron'
+      - 'openstack-neutron-ml2' 
+      - 'openstack-neutron-linuxbridge'
+      - 'ebtables'
+
+- name: Edit the /etc/neutron/neutron.conf file and complete the following actions
+  template:
+    src: neturon.conf_controller.j2
+    dest: /etc/neutron/neutron.conf
+
+- name: Edit the /etc/neutron/plugins/ml2/ml2_conf.ini file and complete the following actions
+  template:
+    src: ml2_conf.ini.j2
+    dest: /etc/neutron/plugins/ml2/ml2_conf.ini
+
+- name: Edit the /etc/neutron/plugins/ml2/linuxbridge_agent.ini file and complete the following actions
+  template:
+     src: linuxbridge_agent.ini_controller.j2
+     dest: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+
+- name: Edit the /etc/neutron/l3_agent.ini file and complete the following actions
+  template:
+    src: l3_agent.ini.j2
+    dest: /etc/neutron/l3_agent.ini
+
+- name: Edit the /etc/neutron/dhcp_agent.ini file and complete the following actions
+  template:
+    src: dhcp_agent.ini.j2
+    dest: /etc/neutron/dhcp_agent.ini
+
+- name: Edit the /etc/neutron/metadata_agent.ini file and complete the following actions
+  template:
+    src: metadata_agent.ini.j2
+    dest: /etc/neutron/metadata_agent.ini
+
+- name: Edit the /etc/nova/nova.conf file and perform the following actions
+  template:
+    src: nova.conf_controller.j2
+    dest: /etc/nova/nova.conf
+
+- name: create symbolic link
+  command: 'ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini'
+
+- name: Populate the database
+  command: ' su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron'
+
+- name: Restart the Compute API service
+  service: 
+    name: openstack-nova-api.service
+    state: restarted
+
+- name: Start the Networking services and configure them to start when the system boots
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+    loop:
+      - 'neutron-server.service'
+      - 'neutron-linuxbridge-agent.service'
+      - 'neutron-dhcp-agent.service'
+      - 'neutron-metadata-agent.service'
+      - 'neutron-l3-agent.service'

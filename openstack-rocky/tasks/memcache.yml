@@ -1,0 +1,21 @@
+---
+- name: Install memcache packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+  loop:
+     - 'memcached'
+     - 'python-memcached'
+
+- name: Edit the /etc/sysconfig/memcached file
+  copy:
+    src: 'memcached'
+    dest: '/etc/sysconfig/memcached'
+
+- name: Start the Memcached service and configure it to start when the system boots
+  service:
+    name: memcached.service
+    state: started
+    enabled: yes
+
+

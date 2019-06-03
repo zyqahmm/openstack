@@ -1,0 +1,30 @@
+---
+- name: Install the components
+  yum:
+    name: "{{ item }}"
+    state: present
+    loop:
+      - 'openstack-neutron'
+      - 'openstack-neutron-ml2'
+      - ' openstack-neutron-linuxbridge'
+      - 'ebtables'
+
+- name: Edit the /etc/neutron/neutron.conf file and complete the following actions
+  template:
+    src: neutron.conf_compute.j2
+    dest: /etc/neutron/neutron.conf
+
+- name: Edit the /etc/neutron/plugins/ml2/ml2_conf.ini file and complete the following actions
+  template:
+    src: ml2_conf.ini.j2
+    dest: /etc/neutron/plugins/ml2/ml2_conf.ini
+
+- name: Edit the /etc/neutron/plugins/ml2/linuxbridge_agent.ini file and complete the following actions
+  template:
+    src: linuxbridge_agent.ini_compute.j2
+    dest: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+
+- name: Edit the /etc/neutron/dhcp_agent.ini file and complete the following actions
+  template:
+    src: dhcp_agent.ini.j2
+    dest: /etc/neutron/dhcp_agent.ini

@@ -1,0 +1,23 @@
+---
+- name: Create a new database with name 'horizon'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: horizon
+    state: present
+
+- name: Create database user with name 'horizon' and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: horizon
+    password: redhat
+    priv: 'horizon.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1

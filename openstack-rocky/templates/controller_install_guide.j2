@@ -1,0 +1,234 @@
+[install the Rocky release]
+yum install centos-release-openstack-queens -y
+yum upgrade -y
+yum install python-openstackclient -y
+
+[SQL]
+yum install mariadb mariadb-server python2-PyMySQL -y
+
+create /etc/my.cnf.d/openstack.cnf
+z
+systemctl enable mariadb.service
+systemctl start mariadb.service
+mysql_secure_installation
+
+
+[Message queue]
+yum install rabbitmq-server -y
+systemctl enable rabbitmq-server.service
+systemctl start rabbitmq-server.service
+rabbitmqctl add_user openstack RABBIT_PASS
+rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+
+[Memcached]
+yum install memcached python-memcached -y
+sed -i "s/OPTIONS=\"-l 127.0.0.1,::1\"/OPTIONS=\"-l 127.0.0.1,::1,controller\"/" /etc/sysconfig/memcached
+systemctl enable memcached.service
+systemctl start memcached.service
+
+[Etcd]
+yum install etcd -y
+
+Edit the /etc/etcd/etcd.conf file
+
+systemctl enable etcd
+systemctl start etcd
+
+
+[Keystone]
+mysql -u root -p
+
+CREATE DATABASE keystone;
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' \
+IDENTIFIED BY 'KEYSTONE_DBPASS';
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' \
+IDENTIFIED BY 'KEYSTONE_DBPASS';
+exit
+yum install openstack-keystone httpd mod_wsgi -y
+Edit the /etc/keystone/keystone.conf
+
+su -s /bin/sh -c "keystone-manage db_sync" keystone
+keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+keystone-manage bootstrap --bootstrap-password ADMIN_PASS \
+  --bootstrap-admin-url http://controller:5000/v3/ \
+  --bootstrap-internal-url http://controller:5000/v3/ \
+  --bootstrap-public-url http://controller:5000/v3/ \
+  --bootstrap-region-id RegionOne
+
+modify /etc/httpd/conf/httpd.conf
+ServerName controller
+
+
+ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
+systemctl enable httpd.service
+systemctl start httpd.service
+export OS_USERNAME=admin
+export OS_PASSWORD=ADMIN_PASS
+export OS_PROJECT_NAME=admin
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_AUTH_URL=http://controller:5000/v3
+export OS_IDENTITY_API_VERSION=3
+
+[Create a domain, projects, users, and roles]
+openstack domain create --description "An Example Domain" example
+openstack project create --domain default \
+  --description "Service Project" service
+openstack project create --domain default \
+  --description "Demo Project" myproject
+openstack user create --domain default \
+  --password-prompt myuser
+
+openstack role create myrole
+openstack role add --project myproject --user myuser myrole
+
+[Create OpenStack client environment scripts]
+vi admin-openrc
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=ADMIN_PASS
+export OS_AUTH_URL=http://controller:5000/v3
+export OS_IDENTITY_API_VERSION=3
+export OS_IMAGE_API_VERSION=2
+
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_NAME=myproject
+export OS_USERNAME=myuser
+export OS_PASSWORD=MYUSER_PASS
+export OS_AUTH_URL=http://controller:5000/v3
+export OS_IDENTITY_API_VERSION=3
+export OS_IMAGE_API_VERSION=2
+
+openstack token issue
+
+[Glance Installation]
+mysql -u root -predhat
+CREATE DATABASE glance;
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' \
+  IDENTIFIED BY 'GLANCE_DBPASS';
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' \
+  IDENTIFIED BY 'GLANCE_DBPASS';
+exit
+. admin-openrc
+openstack user create --domain default --password-prompt glance
+
+
+openstack role add --project service --user glance admin
+openstack service create --name glance \
+  --description "OpenStack Image" image
+openstack endpoint create --region RegionOne \
+  image public http://controller:9292
+openstack endpoint create --region RegionOne \
+  image internal http://controller:9292
+openstack endpoint create --region RegionOne \
+  image admin http://controller:9292
+yum install openstack-glance -y
+
+
+Edit the /etc/glance/glance-api.conf file
+Edit the /etc/glance/glance-registry.conf file
+
+su -s /bin/sh -c "glance-manage db_sync" glance
+systemctl enable openstack-glance-api.service \
+openstack-glance-registry.service
+systemctl start openstack-glance-api.service \
+openstack-glance-registry.service
+
+
+[nova]
+mysql -u root -predhat
+CREATE DATABASE nova_api;
+CREATE DATABASE nova;
+CREATE DATABASE nova_cell0;
+CREATE DATABASE placement;
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'localhost' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'%' \
+  IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'localhost' \
+  IDENTIFIED BY 'PLACEMENT_DBPASS';
+GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'%' \
+  IDENTIFIED BY 'PLACEMENT_DBPASS';
+exit
+. admin-openrc
+openstack user create --domain default --password-prompt nova
+
+
+openstack service create --name nova \
+  --description "OpenStack Compute" compute
+openstack endpoint create --region RegionOne \
+  compute public http://controller:8774/v2.1
+openstack endpoint create --region RegionOne \
+  compute internal http://controller:8774/v2.1
+openstack endpoint create --region RegionOne \
+  compute admin http://controller:8774/v2.1
+openstack user create --domain default --password-prompt placement
+
+
+openstack role add --project service --user placement admin
+openstack service create --name placement \
+  --description "Placement API" placement
+openstack endpoint create --region RegionOne \
+  placement public http://controller:8778
+openstack endpoint create --region RegionOne \
+  placement internal http://controller:8778
+openstack endpoint create --region RegionOne \
+  placement admin http://controller:8778
+yum install openstack-nova-api openstack-nova-conductor \
+  openstack-nova-console openstack-nova-novncproxy \
+  openstack-nova-scheduler openstack-nova-placement-api -y
+Edit the /etc/nova/nova.conf file
+
+modify /etc/httpd/conf.d/00-nova-placement-api.conf
+systemctl restart httpd
+su -s /bin/sh -c "nova-manage api_db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+su -s /bin/sh -c "nova-manage db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 list_cells" nova
+systemctl enable openstack-nova-api.service \
+  openstack-nova-scheduler.service openstack-nova-conductor.service \
+  openstack-nova-novncproxy.service
+systemctl start openstack-nova-api.service \
+  openstack-nova-scheduler.service openstack-nova-conductor.service \
+  openstack-nova-novncproxy.service
+
+[verify nova]
+. admin-openrc
+openstack compute service list
+openstack catalog list
+openstack image list
+nova-status upgrade check
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

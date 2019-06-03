@@ -1,0 +1,198 @@
+> FILE    (/usr/lib/python2.7/site-packages/ansible/modules/files/file.py)
+
+        Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. Many other modules support the same options as the `file' module -
+        including [copy], [template], and [assemble]. For Windows targets, use the [win_file] module instead.
+
+OPTIONS (= is mandatory):
+
+- access_time
+        This parameter indicates the time the file's access time should be set to
+        Should be `preserve' when no modification is required, `YYYYMMDDHHMM.SS' when using default time format, or `now'
+        Default is None meaning that `preserve' is the default for `state=[file,directory,link,hard]' and `now' is default for `state=touch'
+        [Default: (null)]
+        version_added: 2.7
+
+- access_time_format
+        When used with `access_time', indicates the time format that must be used.
+        Based on default Python format (see time.strftime doc)
+        [Default: %Y%m%d%H%M.%S]
+        version_added: 2.7
+
+- attributes
+        Attributes the file or directory should have. To get supported flags look at the man page for `chattr' on the target system. This string should contain the
+        attributes in the same order as the one displayed by `lsattr'.
+        `=' operator is assumed as default, otherwise `+' or `-' operators need to be included in the string.
+        (Aliases: attr)[Default: (null)]
+        version_added: 2.3
+
+- follow
+        This flag indicates that filesystem links, if they exist, should be followed.
+        Previous to Ansible 2.5, this was `no' by default.
+        [Default: yes]
+        type: bool
+        version_added: 1.8
+
+- force
+        force the creation of the symlinks in two cases: the source file does not exist (but will appear later); the destination exists and is a file (so, we need to
+        unlink the "path" file and create symlink to the "src" file in place of it).
+        [Default: no]
+        type: bool
+
+- group
+        Name of the group that should own the file/directory, as would be fed to `chown'.
+        [Default: (null)]
+
+- mode
+        Mode the file or directory should be. For those used to `/usr/bin/chmod' remember that modes are actually octal numbers. You must either add a leading zero so
+        that Ansible's YAML parser knows it is an octal number (like `0644' or `01777') or quote it (like `'644'' or `'1777'') so Ansible receives a string and can do
+        its own conversion from string into number.  Giving Ansible a number without following one of these rules will end up with a decimal number which will have
+        unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, `u+rwx' or `u=rw,g=r,o=r').
+        [Default: (null)]
+
+- modification_time
+        This parameter indicates the time the file's modification time should be set to
+        Should be `preserve' when no modification is required, `YYYYMMDDHHMM.SS' when using default time format, or `now'
+        Default is None meaning that `preserve' is the default for `state=[file,directory,link,hard]' and `now' is default for `state=touch'
+        [Default: (null)]
+        version_added: 2.7
+
+- modification_time_format
+        When used with `modification_time', indicates the time format that must be used.
+        Based on default Python format (see time.strftime doc)
+        [Default: %Y%m%d%H%M.%S]
+        version_added: 2.7
+
+- owner
+        Name of the user that should own the file/directory, as would be fed to `chown'.
+        [Default: (null)]
+
+= path
+        Path to the file being managed.
+        (Aliases: dest, name)
+
+- recurse
+        recursively set the specified file attributes (applies only to directories)
+        [Default: no]
+        type: bool
+        version_added: 1.1
+
+- selevel
+        Level part of the SELinux file context. This is the MLS/MCS attribute, sometimes known as the `range'. `_default' feature works as for `seuser'.
+        [Default: s0]
+
+- serole
+        Role part of SELinux file context, `_default' feature works as for `seuser'.
+        [Default: (null)]
+
+- setype
+        Type part of SELinux file context, `_default' feature works as for `seuser'.
+        [Default: (null)]
+
+- seuser
+        User part of SELinux file context. Will default to system policy, if applicable. If set to `_default', it will use the `user' portion of the policy if
+        available.
+        [Default: (null)]
+
+- src
+        path of the file to link to (applies only to `state=link' and `state=hard'). Will accept absolute, relative and nonexisting paths. Relative paths are relative
+        to the file being created (`path') which is how the UNIX command `ln -s SRC DEST' treats relative paths.
+        [Default: (null)]
+
+- state
+        If `directory', all intermediate subdirectories will be created if they do not exist. Since Ansible 1.7 they will be created with the supplied permissions. If
+        `file', the file will NOT be created if it does not exist; see the `touch' value or the [copy] or [template] module if you want that behavior.  If `link', the
+        symbolic link will be created or changed. Use `hard' for hardlinks. If `absent', directories will be recursively deleted, and files or symlinks will be
+        unlinked. Note that `absent' will not cause `file' to fail if the `path' does not exist as the state did not change. If `touch' (new in 1.4), an empty file will
+        be created if the `path' does not exist, while an existing file or directory will receive updated file access and modification times (similar to the way `touch`
+        works from the command line).
+        (Choices: absent, directory, file, hard, link, touch)[Default: file]
+
+- unsafe_writes
+        By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or
+        just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written
+        in an unsafe manner.
+        This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+        writes). IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+        [Default: no]
+        type: bool
+        version_added: 2.2
+
+
+NOTES:
+      * For Windows targets, use the [win_file] module instead.
+      * See also [copy], [template], [assemble]
+
+AUTHOR: Ansible Core Team, Michael DeHaan
+        METADATA:
+          status:
+          - stableinterface
+          supported_by: core
+        
+
+EXAMPLES:
+# change file ownership, group and mode
+- file:
+    path: /etc/foo.conf
+    owner: foo
+    group: foo
+    # when specifying mode using octal numbers, add a leading 0
+    mode: 0644
+- file:
+    path: /work
+    owner: root
+    group: root
+    mode: 01777
+- file:
+    src: /file/to/link/to
+    dest: /path/to/symlink
+    owner: foo
+    group: foo
+    state: link
+- file:
+    src: '/tmp/{{ item.src }}'
+    dest: '{{ item.dest }}'
+    state: link
+  with_items:
+    - { src: 'x', dest: 'y' }
+    - { src: 'z', dest: 'k' }
+
+# touch a file, using symbolic modes to set the permissions (equivalent to 0644)
+- file:
+    path: /etc/foo.conf
+    state: touch
+    mode: "u=rw,g=r,o=r"
+
+# touch the same file, but add/remove some permissions
+- file:
+    path: /etc/foo.conf
+    state: touch
+    mode: "u+rw,g-wx,o-rwx"
+
+# touch again the same file, but dont change times
+# this makes the task idempotents
+- file:
+    path: /etc/foo.conf
+    state: touch
+    mode: "u+rw,g-wx,o-rwx"
+    modification_time: "preserve"
+    access_time: "preserve"
+
+# create a directory if it doesn't exist
+- file:
+    path: /etc/some_directory
+    state: directory
+    mode: 0755
+
+# updates modification and access time of given file
+- file:
+    path: /etc/some_file
+    state: file
+    mode: 0755
+    modification_time: now
+    access_time: now
+
+RETURN VALUES:
+
+
+
+

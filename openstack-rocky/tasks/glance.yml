@@ -1,0 +1,51 @@
+---
+- name: Create a new database with name 'glance'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: glance
+    state: present
+
+- name: Create database user with name 'glance' and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: glance
+    password: redhat
+    priv: 'glance.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+# need some extra config
+
+- name: Install the packages
+  yum:
+    name: openstack-glance
+    state: present
+
+- name: Edit the /etc/glance/glance-api.conf file and complete the following actions
+  template:
+    src: glance-api.conf.j2
+    dest: /etc/glance/glance-api.conf
+
+- name: Edit the /etc/glance/glance-registry.conf file and complete the following actions
+  template:
+    src: glance-registry.conf.j2
+    dest: /etc/glance/glance-registry.conf
+
+- name: Populate the Image service database
+  command: 'su -s /bin/sh -c "glance-manage db_sync" glance'
+
+- name: Start the Image services and configure them to start when the system boots
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+    loop:
+      - 'openstack-glance-api.service'
+      - 'openstack-glance-registry.service'

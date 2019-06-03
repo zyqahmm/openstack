@@ -1,0 +1,34 @@
+---
+- name: Install mysql packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+  loop:
+     - 'mariadb'
+     - 'mariadb-server'
+     - 'python2-PyMySQL'
+
+- name: Create and edit the /etc/my.cnf.d/openstack.cnf
+  template:
+     src: openstack.cnf.j2
+     dest: /etc/my.cnf.d/openstack.cnf
+
+- name: Start the database service and configure it to start when the system boots
+  service:
+    name: mariadb.service
+    state: started
+    enabled: yes
+
+- name: "Secure MariaDB"
+  expect:
+    command: /bin/mysql_secure_installation
+    responses:
+      'Enter current password for root \(enter for none\): ': ''
+      'Set root password\? \[Y\/n\] ': 'y'
+      'New password:': 'redhat'
+      'Re-enter new password:': 'redhat'
+      'Remove anonymous users\? \[Y\/n\] ': 'y'
+      'Disallow root login remotely\? \[Y\/n\] ': 'y'
+      'Remove test database and access to it\? \[Y\/n\] ': 'y'
+      'Reload privilege tables now\? \[Y\/n\] ': 'y'
+  ignore_errors: yes

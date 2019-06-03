@@ -1,0 +1,31 @@
+---
+
+- name: create rocky repo
+  copy:
+     src: /etc/yum.repos.d/centos-openstack-rocky.repo.bak
+     dest: /etc/yum.repos.d/centos-openstack-rocky.repo
+
+- name: copy host file to remote host
+  copy:
+     src: /etc/hosts
+     dest: /etc/hosts
+
+- name: yum install MySQL-python
+  yum:
+    name: MySQL-python
+    state: present
+
+- name: copy relied packages to remote hosts
+  copy: 
+    src: /home/zyq/Q&A/ansible_expect/python2-pip-8.1.2-6.el7.noarch.rpm
+    dest: /tmp/
+
+- name: yum install python2-pip-8.1.2-6.el7.noarch.rpm
+  yum: 
+     name: /tmp/python2-pip-8.1.2-6.el7.noarch.rpm
+     state: present
+
+- name: pip install pexpect
+  pip:
+    name: pexpect
+    state: latest

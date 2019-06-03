@@ -1,0 +1,206 @@
+---
+- name: Create a new database with name 'keystone'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: keystone
+    state: present
+
+- name: Create database user with name 'keystone' and password 'KEYSTONE_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: keystone
+    password: "{{ KEYSTONE_DBPASS }}"
+    priv: 'keystone.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name 'glance'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: glance
+    state: present
+
+- name: Create database user with name 'glance' and password 'GLANCE_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: glance
+    password: "{{ GLANCE_DBPASS }}"
+    priv: 'glance.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name nova
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: nova
+    state: present
+
+- name: Create database user with name nova and password 'NOVA_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova
+    password: "{{ NOVA_DBPASS }}"
+    priv: 'nova.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name nova_api
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: nova_api
+    state: present
+
+- name: Create database user with name nova_api and password 'NOVA_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova_api
+    password: "{{ NOVA_DBPASS }}"
+    priv: 'nova_api.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name nova_cell0
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: nova_cell0
+    state: present
+
+- name: Create database user with name nova_cell0 and password 'NOVA_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova_cell0
+    password: "{{ NOVA_DBPASS }}"
+    priv: 'nova_cell0.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name placement
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: placement
+    state: present
+
+- name: Create database user with name placement and password 'PLACEMENT_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: placement
+    password: "{{ PLACEMENT_DBPASS }}"
+    priv: 'placement.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name 'neutron'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: neutron
+    state: present
+
+- name: Create database user with name 'neutron' and password 'NEUTRON_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: neutron
+    password: "{{ NEUTRON_DBPASS }}"
+    priv: 'neutron.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+
+- name: Create a new database with name 'cinder'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: cinder
+    state: present
+
+- name: Create database user with name 'cinder' and password 'CINDER_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: cinder
+    password: "{{ CINDER_DBPASS }}"
+    priv: 'cinder.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create a new database with name 'neutron'
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: neutron
+    state: present
+
+- name: Create database user with name 'neutron' and password 'neutron_DBPASS' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: neutron
+    password: "{{ NEUTRON_DBPASS }}"
+    priv: 'neutron.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1

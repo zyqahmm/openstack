@@ -1,0 +1,104 @@
+---
+- name: Create a new database with name nova
+  mysql_db:
+    login_user: root
+    login_password: redhat
+    name: nova
+    state: present
+
+- name: Create database user with name nova and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova
+    password: redhat
+    priv: 'nova.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+- name: Create database user with name nova_api and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova_api
+    password: redhat
+    priv: 'nova_api.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+
+- name: Create database user with name nova_cell0 and password 'redhat' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: redhat
+    host: "{{ item }}"
+    name: nova_cell0
+    password: redhat
+    priv: 'nova_cell0.*:ALL,GRANT'
+    append_privs: true
+    state: present
+  loop:
+    - '%'
+    - 127.0.0.1
+    - localhost
+    - ::1
+
+# nova config
+
+- name: Install the packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+  loop:
+    - 'openstack-nova-api'
+    - 'openstack-nova-conductor'
+    - 'openstack-nova-console'
+    - 'openstack-nova-novncproxy'
+    - 'openstack-nova-scheduler'
+    - 'openstack-nova-placement-api'
+
+- name: Edit the /etc/nova/nova.conf file and complete the following actions
+  template:
+    src: nova.conf_controller.j2
+    dest: /etc/nova/nova.conf
+
+- name: enable access to the Placement API by adding the following configuration to /etc/httpd/conf.d/00-nova-placement-api.conf
+  template:
+    src: 00-nova-placement-api.conf.j2
+    dest: /etc/httpd/conf.d/00-nova-placement-api.conf
+
+- name: Restart the httpd service
+  service: 
+    name: httpd
+    state: restarted
+
+- name: Populate the nova-api database
+  command: "{{ item }}"
+  loop:
+    - 'su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova'
+    - 'su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova'
+    - 'su -s /bin/sh -c "nova-manage db sync" nova'
+
+- name: Start the Compute services and configure them to start when the system boots
+  service:
+    name: "{{ item }}"
+    state: started
+    enadbled: yes
+  loop:
+    - 'openstack-nova-api.service'
+    - 'openstack-nova-consoleauth.service'
+    - 'openstack-nova-scheduler.service'
+    - 'openstack-nova-conductor.service'
+    - 'openstack-nova-novncproxy.service'

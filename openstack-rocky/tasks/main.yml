@@ -1,0 +1,28 @@
+---
+- include: preoptions.yml
+
+- include: openstack_packages.yml
+
+- include: databases.yml
+
+- include: etcd.yml
+
+- include: memcache.yml
+
+- include: rabbitmq.yml
+
+- include: tmp.yml
+
+#- include: keystone.yml
+
+#- include: glance.yml
+
+#- include: nova.yml
+
+#- include: nova_compute_node.yml
+
+#- include: neutron.yml
+
+#- include: neutron_compute.yml
+
+#- include: cinder.yml

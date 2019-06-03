@@ -1,0 +1,22 @@
+---
+
+- name: install the Queens release
+  yum:
+     name: centos-release-openstack-rocky
+     state: present
+
+- name: remove CentOS-OpenStack-rocky.repo
+  file:
+    path: /etc/yum.repos.d/CentOS-OpenStack-rocky.repo
+    state: absent
+
+#- name: Upgrade the packages on all nodes
+#  yum: 
+#    name: '*'
+#    state: latest
+
+- name: Install the OpenStack client
+  yum:
+    name: python-openstackclient
+    state: present
+
